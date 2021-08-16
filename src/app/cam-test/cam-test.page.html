@@ -1,0 +1,37 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Cam-Test</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <div class="Return-Home">
+    <ion-button href="/home">
+      Home
+    </ion-button>
+  </div>
+
+  <ion-button (click)="presentActionSheet()">Test action</ion-button>
+
+  <!-- load image from file / user  -->
+
+  <input #fileSelector (change)="onFileCange($event)" accept="image/*" style="display: none;" type="file">
+  <ion-button (click)="clickFileSelector()" class="ion-text-center">Select File ...</ion-button>
+
+
+  <!-- load video from user  -->
+
+  <!-- ionic event binding happens in the following way 
+  < element (event) = function() > -->
+  <input #VidSelector (change)="onVideoUpload($event)" style="display: none;" type="file">
+  <ion-button (click)="clickFileSelector('VidSelector')" class="ion-text-center">Select Video ...</ion-button> -->
+
+
+  
+  <div #canvasContainer class="ion-text-center canvasContainer">
+    <canvas #canvas></canvas>
+  </div>
+
+
+</ion-content>
