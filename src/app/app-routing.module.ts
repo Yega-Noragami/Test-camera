@@ -22,6 +22,10 @@ const routes: Routes = [
   {
     path: 'cam-test',
     loadChildren: () => import('./cam-test/cam-test.module').then( m => m.CamTestPageModule)
+  },
+  {
+    path: 'vid',
+    loadChildren: () => import('./vid/vid.module').then( m => m.VidPageModule)
   }
 ];
 

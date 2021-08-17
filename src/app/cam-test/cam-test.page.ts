@@ -91,16 +91,15 @@ export class CamTestPage implements OnInit {
       0, 0, img.width * this.ratio, img.height * this.ratio);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // load model and perform keypoint estimation 
   private async estimate(img: any): Promise<void> {
 
     const flipHorizontal = false;
     const posenet = require('@tensorflow-models/posenet');
     const net = await posenet.load();
-    // const model = await this.modelPromise;
+    
     const poses = await net.estimatePoses(img, {
-      flipHorizontal,
-      // decodingMethod: 'single-person'
+      flipHorizontal
     });
     const pose = poses && poses[0];
 
@@ -109,7 +108,7 @@ export class CamTestPage implements OnInit {
         const x = keypoint.position.x * this.ratio;
         const y = keypoint.position.y * this.ratio;
 
-        console.log("any...", x, y)
+        console.log( x, y)
 
         this.ctx.beginPath();
         this.ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
@@ -157,41 +156,6 @@ export class CamTestPage implements OnInit {
     vid.src = url;
   }
 
-  // video pose tracking   
-  private async vidEstimate(vid: any): Promise<void> {
-
-    const flipHorizontal = false;
-    const net = await this.posenet.load({
-      architecture: 'MobileNetV1',
-      outputStride: 16,
-      inputResolution: { width: 640, height: 480 },
-      multiplier: 0.75
-    });
-
-    // const frames = await this.extractFramesFromVideo(vid);
-
-    const poses = await net.estimatePoses(vid, {
-      flipHorizontal,
-      decodingMethod: 'single-person'
-    });
-    const pose = poses && poses[0];
-
-    if (pose && pose.keypoints && this.ratio) {
-      for (const keypoint of pose.keypoints.filter(kp => kp.score >= 0.2)) {
-        const x = keypoint.position.x * this.ratio;
-        const y = keypoint.position.y * this.ratio;
-
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeStyle = '#bada55';
-        this.ctx.stroke();
-      }
-      const adjacentKeyPoints = getAdjacentKeyPoints(pose.keypoints, 0.2);
-      adjacentKeyPoints.forEach(keypoints => this.drawSegment(keypoints[0].position, keypoints[1].position));
-    }
-  }
-
   async getPoseEstimation(vid, fps?) {
     if (!fps) fps = 30;
     console.log("getPoseEstimation starts.", vid, fps)
@@ -212,16 +176,16 @@ export class CamTestPage implements OnInit {
       let interval = 1 / fps;
       let currentTime = 0;
 
+
       while (currentTime < duration) {
-        await this.posenet.load().then(function (net) {
-          console.log(typeof vid)
-          const pose = net.estimateSinglePose(vid, {
-            flipHorizontal: true
+        await this.posenet.load()
+        .then( (net)=>{
+              const poses = net.estimatePoses(vid, {
+              flipHorizontal: true
           });
-          return pose;
-        }).then(function (pose) {
-          console.log(pose);
-        });
+          console.log(poses)
+          return poses;
+        })
 
         vid.currentTime = currentTime;
         await new Promise(r => seekResolve = r);
@@ -232,12 +196,13 @@ export class CamTestPage implements OnInit {
 
         currentTime += interval;
       }
-
-
       // console.log("Frames type "+ typeof frames + " length of Frames"+ frames.length)
-
       resolve(frames);
     });
   }
 }
+
+
+
+
 

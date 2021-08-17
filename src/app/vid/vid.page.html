@@ -1,0 +1,34 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>vid</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <div class="Return-Home">
+    <ion-button href="/home">
+      Home
+    </ion-button>
+  </div>
+
+
+  <!-- <input #videoElement (change) ="onVidLoad($event) []" style = "display:none" type = "file">
+  <ion-button  (click) = "videoSelector()" class="ion-text-center">upload Video</ion-button> -->
+
+  <div *ngFor="let v of videos; let i = index;">
+    <input type="file"  [id]="'input'+v.id"  (change)="fileOnChange('input'+v.id, 'output'+v.id, i)"/>
+
+    <div>
+      <video  [id]="'output'+v.id" style="border: 1px solid black; max-width: 300px;">
+        <source [src]=""  />
+      </video>
+    </div>
+   
+  </div>
+  
+
+  
+  
+
+</ion-content>
