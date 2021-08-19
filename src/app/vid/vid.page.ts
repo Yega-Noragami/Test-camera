@@ -27,6 +27,7 @@ percentage;
   video: any;
   url: any;
   squat_count= 0;
+  push_count=0;
   // video = new Array<HTMLVideoElement>();
   
   videos: Array<Video> = [
@@ -113,10 +114,10 @@ percentage;
     console.log(pose)
 
     window.length;
-    
   }
    
 
+  // Function to do automatic Squat counting 
   async doSquatCounting(id){
 
     const vid = this.videos[id].data;
@@ -129,14 +130,10 @@ percentage;
     const id_list_right = [12 , 14, 16];
     const id_list_left = [11 ,13 , 15];
 
-    
-
     let low , high , percentage ,angle , count ;
     low = 50;
     high = 160;
     let direction =0;
-    // count = 0;
-    
 
     const pose = await net.estimateSinglePose(vid, {
       flipHorizontal: false
@@ -161,6 +158,8 @@ percentage;
         
         // try to return this value back to html
         // document.getElementById("ret").innerHTML = String(percentage);
+
+        // set restriction for max , full and improper repetion 
         if ( percentage==100){
           if( direction==0){
             console.log("up")
@@ -180,10 +179,67 @@ percentage;
       }
     }, 100);
 
-     
-   
-    // set restriction for max , full and improper repetion 
-    // return when condition is satisfied 
+  }
+
+  async doPushUpCounting(id){
+    const vid = this.videos[id].data;
+    vid.width= 500;
+    vid.height = 500/1.7778;
+
+    const posenet = require('@tensorflow-models/posenet');
+    const net = await posenet.load();
+    
+    const id_list_right = [6 , 8, 10];
+    const id_list_left = [5 , 7 , 9];
+
+    let low , high , percentage ,angle , count ;
+    low = 100;
+    high = 170;
+    let direction =0;
+
+    const pose = await net.estimateSinglePose(vid, {
+      flipHorizontal: false
+    })
+    console.log(pose)
+    const findAngle = (p1,p2,p3,p4)=>this.findAngle(p1,p2,p3,p4);
+    //loop function to run every 1 sec until the video is over !
+    let temp_id = setInterval( async ()=>{
+      if (vid.onended){
+        clearInterval(temp_id);
+      }
+      else {
+        // Figure out how to use Findangle inside
+        const pose =net.estimateSinglePose(vid, {
+          flipHorizontal: false
+        })
+        angle = findAngle(await pose , 5 , 7 ,9);
+        percentage = ((angle - low) * 100) / (high - low)
+        percentage = this.calPercentage(percentage)
+        this.percentage = percentage;
+        console.log("percentage of complete:", percentage);
+        
+        // try to return this value back to html
+        // document.getElementById("ret").innerHTML = String(percentage);
+
+        // set restriction for max , full and improper repetion 
+        if ( percentage==100){
+          if( direction==0){
+            console.log("up")
+            this.push_count +=0.5;
+            direction=1;
+          }
+        }
+        if ( percentage==0){
+          if( direction==1){
+            console.log("down");
+            this.push_count +=0.5;
+            direction=0;
+          }
+        }
+        console.log("Total Number of Pushup: "+Math.floor(this.push_count+1));
+        console.log("Angle:", angle);
+      }
+    }, 100);
 
   }
 
@@ -215,28 +271,6 @@ percentage;
 
     let angle =(Math.acos( (a+b-c) / Math.sqrt(4*a*b) ) )*(180/3.14)
     return angle; 
-    
-    // const x1= pose.keypoints[id1].position.x;
-    // const y1= pose.keypoints[id1].position.y;
-
-    // const x2= pose.keypoints[id2].position.x;
-    // const y2= pose.keypoints[id2].position.y;
-
-    // const x3= pose.keypoints[id3].position.x;
-    // const y3= pose.keypoints[id3].position.y;
-
-    // let A = {x:x1, y:y1}, B = {x:x2, y:y2}, C = {x:x3, y:y3}
-
-    // var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));    
-    // var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2)); 
-    // var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
-
-    // let angle=  Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
-
-    // angle = angle*(180/3.14)
-
-  
-    // return angle;
   }
 
   dosomethinghere(video: HTMLVideoElement) {
