@@ -20,7 +20,7 @@
 
   <div *ngFor="let v of videos; let i = index;">
     
-    <ion-progress-bar [value]=calPercentage(percentage)></ion-progress-bar>
+    <!-- <p id = "progress-bar"></p>   -->
 
     <input type="file"  [id]="'input'+v.id"  (change)="fileOnChange('input'+v.id, 'output'+v.id, i)"/>
 

@@ -26,6 +26,7 @@ percentage;
   posenet = require('@tensorflow-models/posenet');
   video: any;
   url: any;
+  squat_count= 0;
   // video = new Array<HTMLVideoElement>();
   
   videos: Array<Video> = [
@@ -128,11 +129,13 @@ percentage;
     const id_list_right = [12 , 14, 16];
     const id_list_left = [11 ,13 , 15];
 
-    const count = 0;
+    
 
-    let low , high , percentage ,angle ;
+    let low , high , percentage ,angle , count ;
     low = 50;
-    high = 160
+    high = 160;
+    let direction =0;
+    // count = 0;
     
 
     const pose = await net.estimateSinglePose(vid, {
@@ -146,18 +149,34 @@ percentage;
         clearInterval(temp_id);
       }
       else {
-
         // Figure out how to use Findangle inside
-
         const pose =net.estimateSinglePose(vid, {
           flipHorizontal: false
         })
         angle = findAngle(await pose , 12 , 14 , 16);
         percentage = ((angle - low) * 100) / (high - low)
-        console.log("percentage of complete:", percentage);
+        percentage = this.calPercentage(percentage)
         this.percentage = percentage;
-        console.log(angle);
+        console.log("percentage of complete:", percentage);
         
+        // try to return this value back to html
+        // document.getElementById("ret").innerHTML = String(percentage);
+        if ( percentage==100){
+          if( direction==0){
+            console.log("up")
+            this.squat_count +=0.5;
+            direction=1;
+          }
+        }
+        if ( percentage==0){
+          if( direction==1){
+            console.log("down");
+            this.squat_count +=0.5;
+            direction=0;
+          }
+        }
+        console.log("Total Number of Squat: "+Math.floor(this.squat_count+1));
+        console.log(angle);
       }
     }, 100);
 
