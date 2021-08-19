@@ -5,6 +5,8 @@
 </ion-header>
 
 <ion-content>
+  <!-- <div id=percentage></div> -->
+  
 
   <div class="Return-Home">
     <ion-button href="/home">
@@ -17,6 +19,9 @@
   <ion-button  (click) = "videoSelector()" class="ion-text-center">upload Video</ion-button> -->
 
   <div *ngFor="let v of videos; let i = index;">
+    
+    <ion-progress-bar [value]=calPercentage(percentage)></ion-progress-bar>
+
     <input type="file"  [id]="'input'+v.id"  (change)="fileOnChange('input'+v.id, 'output'+v.id, i)"/>
 
     <div>
