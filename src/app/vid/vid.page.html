@@ -26,17 +26,23 @@
     <div>
       <video [id]="'output'+v.id" style="border: 1px solid black; max-width: 100vw;" controls>
         <source [src]=""  type="video/mp4/video/quicktime">
-      </video>
-
-            
+      </video>            
     </div>
 
+    <input type ="file" [id]="'coachInput'+v.id" (change)="coachOnChange('coachInput'+v.id, 'coachOutput'+v.id, i)"/>
+    <div>
+      <video [id]="'coachOutput'+v.id" style="border: 1px solid black; max-width: 100vw;" controls>
+        <source [src]=""  type="video/mp4/video/quicktime">
+      </video>            
+    </div>
+    <canvas id="canvas" style="width: 300px;"></canvas>
     <!-- <button (click)="checkType(i)">check type</button> -->
     <button (click)="doPoseEstimation(i)">poseEstimtaion</button>
     <button (click)="doSquatCounting(i)">SquatCount</button>
     <button (click)="doPushUpCounting(i)">PushupCount</button>
-
-
+    <button (click)="doPreprocessing(i)">Preprocessing</button>
+    <!-- <button (click)="doPoseChecking(i)">doPoseMatching</button> -->
+    
     
   
   </div>
