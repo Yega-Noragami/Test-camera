@@ -8,6 +8,10 @@ import { getAdjacentKeyPoints, load, PoseNet } from '@tensorflow-models/posenet'
 import * as cocoSSD from '@tensorflow-models/coco-ssd';
 
 
+//coco-ssd plugin's
+require('@tensorflow/tfjs-backend-cpu');
+require('@tensorflow/tfjs-backend-webgl');
+const cocoSsd = require('@tensorflow-models/coco-ssd');
 
 // declare Global Variable require. 
 declare var require: any
@@ -360,26 +364,26 @@ export class VidPage implements OnInit {
 
         //store user and coach coordinates 
         var user_pos = new Array<number>();
-        var coach_pos= new Array<number>();
+        var coach_pos = new Array<number>();
 
         const pose = await net.estimateSinglePose(vid, {
           flipHorizontal: false
         })
 
-        const coachPose = await net.estimateSinglePose(coachVid,{
+        const coachPose = await net.estimateSinglePose(coachVid, {
           flipHorizontal: false
         })
 
         //perform normalisation on the input 
         // console.log("what is undefined?", pose, pose.keypoints);
-        for (let i=0 ; i<17 ; i++){
+        for (let i = 0; i < 17; i++) {
 
-        user_pos.push(pose.keypoints[i].position.x);
-        user_pos.push(pose.keypoints[i].position.y);
+          user_pos.push(pose.keypoints[i].position.x);
+          user_pos.push(pose.keypoints[i].position.y);
 
-        coach_pos.push(coachPose.keypoints[i].position.x);
-        coach_pos.push(coachPose.keypoints[i].position.y);
-          
+          coach_pos.push(coachPose.keypoints[i].position.x);
+          coach_pos.push(coachPose.keypoints[i].position.y);
+
         }
 
         var poseVector1 = user_pos//.toString();
@@ -389,7 +393,7 @@ export class VidPage implements OnInit {
         const similarity = require('compute-cosine-similarity');
         let cosineSimilarity = similarity(poseVector1, poseVector2);
         let distance = 2 * (1 - cosineSimilarity);
-        var score =  Math.sqrt(distance);
+        var score = Math.sqrt(distance);
 
         console.log("the pose matching socre : ", score);
 
@@ -398,8 +402,8 @@ export class VidPage implements OnInit {
   }
 
   // functions to perform preprocessing 
-  
-  async doPreprocessing(id){
+
+  async doPreprocessing(id) {
 
     const vid = this.videos[id].data;
     const coachVid = this.videos[id].data;
@@ -407,53 +411,92 @@ export class VidPage implements OnInit {
     console.log("this video is of type:", typeof vid)
 
     const model = await cocoSSD.load('lite_mobilenet_v2' as any);
-    this.detectFrame(vid,model);
+    this.detectFrame(vid, model);
 
   }
 
   detectFrame = (video, model) => {
     model.detect(video).then(predictions => {
       console.log("prediction", predictions);
-      this.renderPredictions(predictions,video);
-    requestAnimationFrame(() => {
-    this.detectFrame(video, model);});
+      this.renderPredictions(predictions, video);
+      requestAnimationFrame(() => {
+        this.detectFrame(video, model);
+      });
     });
   }
 
-  renderPredictions = (predictions,vid) => {
-    const canvas = <HTMLCanvasElement> document.getElementById ("canvas");
+  renderPredictions = (predictions, vid) => {
+    const canvas = <HTMLCanvasElement>document.getElementById("canvas");
     console.log("renderPredictions() starts.", canvas);
     const ctx = canvas.getContext("2d");
-    canvas.width  = 300;
+    canvas.width = 300;
     canvas.height = 300;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     // Fonts
     const font = "16px sans-serif";
     ctx.font = font;
     ctx.textBaseline = "top";
-    ctx.drawImage(vid,0, 0,300,300);
-  predictions.forEach(prediction => {
-    const x = prediction.bbox[0];
-    const y = prediction.bbox[1];
-    const width = prediction.bbox[2];
-    const height = prediction.bbox[3];
-    // Bounding box
-    ctx.strokeStyle = "#00FFFF";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, width, height);
-    // Label background
-    ctx.fillStyle = "#00FFFF";
-    const textWidth = ctx.measureText(prediction.class).width;
-    const textHeight = parseInt(font, 10); // base 10
-    ctx.fillRect(x, y, textWidth + 4, textHeight + 4);
-  });
-  predictions.forEach(prediction => {
-    
-    const x = prediction.bbox[0];
-    const y = prediction.bbox[1];
-    ctx.fillStyle = "#000000";
-    ctx.fillText(prediction.class, x, y);});
+    ctx.drawImage(vid, 0, 0, 300, 300);
+    predictions.forEach(prediction => {
+      const x = prediction.bbox[0];
+      const y = prediction.bbox[1];
+      const width = prediction.bbox[2];
+      const height = prediction.bbox[3];
+      // Bounding box
+      ctx.strokeStyle = "#00FFFF";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, width, height);
+      // Label background
+      ctx.fillStyle = "#00FFFF";
+      const textWidth = ctx.measureText(prediction.class).width;
+      const textHeight = parseInt(font, 10); // base 10
+      ctx.fillRect(x, y, textWidth + 4, textHeight + 4);
+    });
+    predictions.forEach(prediction => {
+
+      const x = prediction.bbox[0];
+      const y = prediction.bbox[1];
+      ctx.fillStyle = "#000000";
+      ctx.fillText(prediction.class, x, y);
+    });
   };
 
+  // function to perform cropping 
+  async doCropping(id) {
+
+    const vid = this.videos[id].data;
+    const coachVid = this.videos[id].data;
+
+
+    vid.width = 500;
+    vid.height = 500 / 1.7778;
+
+    // const posenet = require('@tensorflow-models/posenet');
+    // const net = await posenet.load();
+
+    let temp_id = setInterval(async () => {
+      if (vid.onended) {
+        clearInterval(temp_id);
+      }
+      else {
+
+        // Load the model.
+      const model = await cocoSsd.load();
+
+      // Classify the image.
+      const predictions:any[] = await model.detect(coachVid);
+
+      console.log('Predictions: ');
+      // console.log(predictions.find(prediction=>prediction.class ==="person")?.bbox);
+
+      var results = predictions.find(prediction=>prediction.class ==="person")?.bbox;
+      console.log(results);
+
+      
+      // get the size for bounding box  if prediction 
+
+      }
+    }, 100);
+  }
 
 }

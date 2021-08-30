@@ -102,6 +102,9 @@ export class CamTestPage implements OnInit {
       flipHorizontal
     });
     const pose = poses && poses[0];
+    
+    //to be deleted 
+    console.log(pose);
 
     if (pose && pose.keypoints && this.ratio) {
       for (const keypoint of pose.keypoints.filter(kp => kp.score >= 0.2)) {
