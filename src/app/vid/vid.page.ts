@@ -491,6 +491,17 @@ export class VidPage implements OnInit {
 
       var results = predictions.find(prediction=>prediction.class ==="person")?.bbox;
       console.log(results);
+      
+      //check height width and return the square 
+      var height = results[3];
+      var width = results[2];
+      
+      if ( height >= width ){
+        width = height ;
+      }
+      else{
+        height = width;
+      }
 
       
       // get the size for bounding box  if prediction 
