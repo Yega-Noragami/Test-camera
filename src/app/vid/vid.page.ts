@@ -503,7 +503,6 @@ export class VidPage implements OnInit {
         height = width;
       }
 
-      
       // get the size for bounding box  if prediction 
 
       }
