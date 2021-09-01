@@ -102,6 +102,9 @@ export class CamTestPage implements OnInit {
       flipHorizontal
     });
     const pose = poses && poses[0];
+    
+    //to be deleted 
+    console.log(pose);
 
     if (pose && pose.keypoints && this.ratio) {
       for (const keypoint of pose.keypoints.filter(kp => kp.score >= 0.2)) {
@@ -200,6 +203,32 @@ export class CamTestPage implements OnInit {
       resolve(frames);
     });
   }
+
+  // normalisation logic -> Crop into square
+  // async Normalisation (x , y , height , width){
+  //   var xmin , ymin , xmax , ymax ;
+  //   xmin = x; 
+  //   ymin = y; 
+  //   xmax = xmin +width; 
+  //   ymax = ymin +height;
+
+  //   if (xmax>ymax){
+  //     length = xmax - xmin
+  //     var displacement = (ymax-ymin)
+  //     ymin = ymin - displacement
+  //     ymax = ymax - displacement
+  //     var y_length = ymin+length
+  //     cropped_img = image.crop((xmin , ymin , xmax , y_length))
+      
+  //   else if (ymax>xmax){
+  //     length = ymax-ymin
+  //     displacement = (xmax-xmin)
+  //     xmin = xmin -displacement
+  //     xmax = xmax -displacement
+  //     var x_length = xmin + length
+  //     cropped_img= image.crop((xmin , ymin , x_length ))
+  //   }
+  // }
 }
 
 
