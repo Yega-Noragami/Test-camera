@@ -8,6 +8,7 @@ import { getAdjacentKeyPoints, load, PoseNet } from '@tensorflow-models/posenet'
 import * as cocoSSD from '@tensorflow-models/coco-ssd';
 
 
+
 //coco-ssd plugin's
 require('@tensorflow/tfjs-backend-cpu');
 require('@tensorflow/tfjs-backend-webgl');
@@ -40,6 +41,7 @@ export class VidPage implements OnInit {
   url: any;
   squat_count = 0;
   push_count = 0;
+  pushupTrackingArray = [];
   // video = new Array<HTMLVideoElement>();
 
   //array for storing user video elements 
@@ -243,6 +245,7 @@ export class VidPage implements OnInit {
 
   }
 
+  //Function to count the number of Pushups 
   async doPushUpCounting(id) {
     const vid = this.videos[id].data;
     vid.width = 500;
@@ -401,8 +404,7 @@ export class VidPage implements OnInit {
     }, 100);
   }
 
-  // functions to perform preprocessing 
-
+  // functions to perform preprocessing (not completed)
   async doPreprocessing(id) {
 
     const vid = this.videos[id].data;
@@ -481,32 +483,156 @@ export class VidPage implements OnInit {
       else {
 
         // Load the model.
-      const model = await cocoSsd.load();
+        const model = await cocoSsd.load();
 
-      // Classify the image.
-      const predictions:any[] = await model.detect(coachVid);
+        // Classify the image.
+        const predictions: any[] = await model.detect(coachVid);
 
-      console.log('Predictions: ');
-      // console.log(predictions.find(prediction=>prediction.class ==="person")?.bbox);
+        console.log('Predictions: ');
+        // console.log(predictions.find(prediction=>prediction.class ==="person")?.bbox);
 
-      var results = predictions.find(prediction=>prediction.class ==="person")?.bbox;
-      console.log(results);
-      
-      //check height width and return the square 
-      var height = results[3];
-      var width = results[2];
-      
-      if ( height >= width ){
-        width = height ;
-      }
-      else{
-        height = width;
-      }
+        var results = predictions.find(prediction => prediction.class === "person")?.bbox;
+        console.log(results);
 
-      // get the size for bounding box  if prediction 
+        //check height width and return the square 
+        var height = results[3];
+        var width = results[2];
+
+        if (height >= width) {
+          width = height;
+        }
+        else {
+          height = width;
+        }
+
+        // get the size for bounding box  if prediction 
 
       }
     }, 100);
   }
+
+  //to be implement 
+
+  //returns the distance between 2 points 
+  async findDistanceBy2Id(pose, id1, id2) {
+
+    var x0 = pose.keypoints[id1].position.x;
+    var y0 = pose.keypoints[id1].position.y;
+
+    var x1 = pose.keypoints[id2].position.x;
+    var y1 = pose.keypoints[id2].position.y;
+
+    var dx = x1 - x0;
+    var dy = y1 - y0;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+
+    return dist;
+  }
+  async findDistanceBy3Id(pose, id1, id2, id3) {
+
+  }
+
+
+  async squatNewDistance(id) {
+
+    const vid = this.videos[id].data;
+    const coachVid = this.videos[id].data;
+
+
+    vid.width = 500;
+    vid.height = 500 / 1.7778;
+
+    const posenet = require('@tensorflow-models/posenet');
+    const net = await posenet.load();
+
+    //  ---   start while loop ---
+    //logic 
+    // get pose and set as initial pose '
+
+    //to keep track of workout 
+    let count = 0;
+    //A flag denoting change in state. 0 -> previous state is continuing, 1 -> state has changed
+    let direction = 0
+
+    let low = 10
+    let high = 110
+    let percentage = 0
+
+    //array count track 
+    let init_i = 0
+
+    const init_pose = await net.estimateSinglePose(vid, {
+      flipHorizontal: false
+    })
+    //loop function to run every 1 sec until the video is over !
+
+    // var pushupTrackingArray = [[],[]];
+
+    let temp_id = setInterval(async () => {
+      if (vid.onended) {
+        clearInterval(temp_id);
+      }
+      else {
+        // Figure out how to use Findangle inside
+        const pose = await net.estimateSinglePose(vid, {
+          flipHorizontal: false
+        })
+
+        //fill array with counts
+        console.log("-------  ----------- --------  --------  ----------")
+        console.log("Time:", init_i)
+        console.log("Value of I :", init_i)
+        for (let j = 0; j < pose.keypoints.length; j++) {
+          // console.log (pose.keypoints[j].part , pose.keypoints[j].score);
+          // console.log ( pose.keypoints[j].position.x ,pose.keypoints[j].position.y);
+          // console.log("keypoints: ", pose.keypoints[j].part , 'The value of i:', init_i , " j:", j);
+          // console.log("x , y coordinates:", pose.keypoints[j].position.x ,",", pose.keypoints[j].position.y);
+          this.pushupTrackingArray.push(pose.keypoints)
+
+          // how to extract the full range of joint motion by id
+          var arrayNose = this.pushupTrackingArray.map(each => { return each[0] });
+
+          // console.log("This is arrayNose: ",arrayNose);
+        }
+
+        //get current nose position 
+        let current = pose.keypoints[0].position.y;
+
+        console.log(current);
+
+        percentage = ((current - low) * 100) / (high - low)
+        percentage = this.calPercentage(percentage)
+
+        //final percentage
+        console.log("The current percentage:", percentage);
+
+        if (percentage == 100) {
+          if (direction == 0) {
+            // console.log("up")
+            this.squat_count += 0.5;
+            direction = 1;
+          }
+        }
+        if (percentage == 0) {
+          if (direction == 1) {
+            // console.log("down");
+            this.squat_count += 0.5;
+            direction = 0;
+          }
+        }
+
+        console.log("the total number of squat:",this.squat_count )
+
+        init_i += 1;
+
+
+      }
+    }, 100);
+
+
+
+
+  }
+
 
 }
