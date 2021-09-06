@@ -624,15 +624,71 @@ export class VidPage implements OnInit {
         console.log("the total number of squat:",this.squat_count )
 
         init_i += 1;
-
-
       }
     }, 100);
-
-
-
-
   }
 
+  //to count pushups with the help of direction 
+  async squatDynamicDistance(id){
 
+    const vid = this.videos[id].data;
+    const coachVid = this.videos[id].data;
+
+
+    vid.width = 500;
+    vid.height = 500 / 1.7778;
+
+    //load posenet module 
+    const posenet = require('@tensorflow-models/posenet');
+    const net = await posenet.load();
+
+    // get pose and set as initial pose '
+
+    //to keep track of workout 
+    let count = 0;
+    //A flag denoting change in state. 0 -> previous state is continuing, 1 -> state has changed
+    let direction = 0
+    //array count track 
+    let init_i = 0
+
+    const init_pose = await net.estimateSinglePose(vid, {
+      flipHorizontal: false
+    })
+
+    let temp_id = setInterval(async () => {
+      if (vid.onended) {
+        clearInterval(temp_id);
+      }
+      else {
+        const pose = await net.estimateSinglePose(vid, {
+          flipHorizontal: false
+        })
+
+        //fill array with counts
+        console.log("-------  ----------- --------  --------  ----------")
+        console.log("Time:", init_i)
+        console.log("Value of I :", init_i)
+     
+        //save current pose inside an array 
+        this.pushupTrackingArray.push(pose.keypoints)
+     
+        // extract nose values 
+        var arrayNose = this.pushupTrackingArray.map(each => { return each[0]});
+        console.log("ArrayNose is of type:",typeof(arrayNose))
+        
+        console.log("length of arraypose:", arrayNose.length);
+        for (var indexCount =0 ; indexCount < arrayNose.length ; indexCount++){
+          console.log(arrayNose[indexCount].position.y)
+        }
+        // console.log(arrayNose[0].position.x)
+        
+        //make function to calculate the rate of change in last x seconds 
+        
+        
+        init_i += 1;
+      }
+    }, 100);
+  }
+
+ 
 }
