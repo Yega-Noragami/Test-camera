@@ -41,6 +41,7 @@ export class VidPage implements OnInit {
   url: any;
   squat_count = 0;
   push_count = 0;
+  dynamic_squat = 0;
   pushupTrackingArray = [];
   // video = new Array<HTMLVideoElement>();
 
@@ -621,7 +622,7 @@ export class VidPage implements OnInit {
           }
         }
 
-        console.log("the total number of squat:",this.squat_count )
+        console.log("the total number of squat:", this.squat_count)
 
         init_i += 1;
       }
@@ -629,7 +630,7 @@ export class VidPage implements OnInit {
   }
 
   //to count pushups with the help of direction 
-  async squatDynamicDistance(id){
+  async squatDynamicDistance(id) {
 
     const vid = this.videos[id].data;
     const coachVid = this.videos[id].data;
@@ -668,27 +669,71 @@ export class VidPage implements OnInit {
         console.log("-------  ----------- --------  --------  ----------")
         console.log("Time:", init_i)
         console.log("Value of I :", init_i)
-     
+
         //save current pose inside an array 
         this.pushupTrackingArray.push(pose.keypoints)
-     
+
         // extract nose values 
-        var arrayNose = this.pushupTrackingArray.map(each => { return each[0]});
-        console.log("ArrayNose is of type:",typeof(arrayNose))
-        
+        var arrayNose = this.pushupTrackingArray.map(each => { return each[0] });
+        console.log("ArrayNose is of type:", typeof (arrayNose))
+
         console.log("length of arraypose:", arrayNose.length);
-        for (var indexCount =0 ; indexCount < arrayNose.length ; indexCount++){
-          console.log(arrayNose[indexCount].position.y)
-        }
+
+        // for (var indexCount =0 ; indexCount < arrayNose.length ; indexCount++){
+        //   console.log(arrayNose[indexCount].position.y)
+        // }
         // console.log(arrayNose[0].position.x)
-        
+        var direction = await this.getdirection(pose, arrayNose, arrayNose.length, 5)
         //make function to calculate the rate of change in last x seconds 
+        console.log("the value of direction is :", direction)
+
+        var tempVar = 1
+        if (direction ==-1 && tempVar==1){
+          this.dynamic_squat+=0.5
+          tempVar =0;
+        }
+        if (direction ==1 &&tempVar ==0){
+          this.dynamic_squat+=0.5
+          tempVar =1;
+        }
+
         
-        
+
+        console.log("Total number of squats:", this.dynamic_squat);
+
         init_i += 1;
       }
-    }, 100);
+    }, 200);
   }
 
- 
+  // this function returns the direction of motion.
+  async getdirection(pose, elements, length, frame) {
+
+    var start = length - frame
+    var changes = []
+    var totalChange = 0
+
+    console.log("get diection called ")
+    for (var i = start, j = 0; j < frame - 1; i++, j++) {
+      // console.log("start position:", elements[start].position.y)
+
+      changes[j] = elements[start + j + 1].position.y - elements[start + j].position.y;
+
+      totalChange += changes[j];
+    }
+      console.log("total change:", totalChange)
+    
+
+    if (totalChange > 0) {
+      totalChange = 1
+    }
+    if (totalChange <0){
+      totalChange=-1
+    }
+    else totalChange = 0
+    // console.log("overallChange :", totalChange);
+
+    return totalChange;
+  }
+
 }
