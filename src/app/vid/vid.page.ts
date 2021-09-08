@@ -652,11 +652,14 @@ export class VidPage implements OnInit {
     //array count track 
     let init_i = 0
 
+    let tempVar = 1
+
     const init_pose = await net.estimateSinglePose(vid, {
       flipHorizontal: false
     })
 
     let temp_id = setInterval(async () => {
+
       if (vid.onended) {
         clearInterval(temp_id);
       }
@@ -683,27 +686,32 @@ export class VidPage implements OnInit {
         //   console.log(arrayNose[indexCount].position.y)
         // }
         // console.log(arrayNose[0].position.x)
-        var direction = await this.getdirection(pose, arrayNose, arrayNose.length, 5)
+        var direction = await this.getdirection(pose, arrayNose, arrayNose.length, 3)
         //make function to calculate the rate of change in last x seconds 
+
         console.log("the value of direction is :", direction)
 
-        var tempVar = 1
-        if (direction ==-1 && tempVar==1){
-          this.dynamic_squat+=0.5
-          tempVar =0;
+
+
+        if (direction == -1 && tempVar == 1) {
+          console.log("------------------------- direction up called")
+          this.dynamic_squat += 0.5
+          tempVar = 0;
+
         }
-        if (direction ==1 &&tempVar ==0){
-          this.dynamic_squat+=0.5
-          tempVar =1;
+        if (direction == 1 && tempVar == 0) {
+          console.log("------------------------- direction down called")
+          this.dynamic_squat += 0.5
+          tempVar = 1;
         }
 
-        
+
 
         console.log("Total number of squats:", this.dynamic_squat);
 
         init_i += 1;
       }
-    }, 200);
+    }, 300);
   }
 
   // this function returns the direction of motion.
@@ -719,16 +727,21 @@ export class VidPage implements OnInit {
 
       changes[j] = elements[start + j + 1].position.y - elements[start + j].position.y;
 
-      totalChange += changes[j];
+        totalChange += changes[j];
     }
-      console.log("total change:", totalChange)
-    
 
-    if (totalChange > 0) {
+    var relativeChange = Math.abs(totalChange/frame);
+    var leastDistane = await this.findDistanceBy2Id(pose, 0, 1)
+    leastDistane = leastDistane*2
+    console.log("======total change:", relativeChange)
+
+    console.log("=======distance between 2 points : ", leastDistane);
+
+    if (totalChange >= 0.1 && relativeChange>leastDistane) {
       totalChange = 1
     }
-    if (totalChange <0){
-      totalChange=-1
+    else if (totalChange <= -0.1 && relativeChange>leastDistane) {
+      totalChange = -1
     }
     else totalChange = 0
     // console.log("overallChange :", totalChange);
