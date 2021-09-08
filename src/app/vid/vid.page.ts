@@ -41,6 +41,7 @@ export class VidPage implements OnInit {
   url: any;
   squat_count = 0;
   push_count = 0;
+  dynamic_squat = 0;
   pushupTrackingArray = [];
   // video = new Array<HTMLVideoElement>();
 
@@ -621,18 +622,131 @@ export class VidPage implements OnInit {
           }
         }
 
-        console.log("the total number of squat:",this.squat_count )
+        console.log("the total number of squat:", this.squat_count)
 
         init_i += 1;
-
-
       }
     }, 100);
-
-
-
-
   }
 
+  //to count pushups with the help of direction 
+  async squatDynamicDistance(id) {
+
+    const vid = this.videos[id].data;
+    const coachVid = this.videos[id].data;
+
+
+    vid.width = 500;
+    vid.height = 500 / 1.7778;
+
+    //load posenet module 
+    const posenet = require('@tensorflow-models/posenet');
+    const net = await posenet.load();
+
+    // get pose and set as initial pose '
+
+    //to keep track of workout 
+    let count = 0;
+    //A flag denoting change in state. 0 -> previous state is continuing, 1 -> state has changed
+    let direction = 0
+    //array count track 
+    let init_i = 0
+
+    let tempVar = 1
+
+    const init_pose = await net.estimateSinglePose(vid, {
+      flipHorizontal: false
+    })
+
+    let temp_id = setInterval(async () => {
+
+      if (vid.onended) {
+        clearInterval(temp_id);
+      }
+      else {
+        const pose = await net.estimateSinglePose(vid, {
+          flipHorizontal: false
+        })
+
+        //fill array with counts
+        console.log("-------  ----------- --------  --------  ----------")
+        console.log("Time:", init_i)
+        console.log("Value of I :", init_i)
+
+        //save current pose inside an array 
+        this.pushupTrackingArray.push(pose.keypoints)
+
+        // extract nose values 
+        var arrayNose = this.pushupTrackingArray.map(each => { return each[0] });
+        console.log("ArrayNose is of type:", typeof (arrayNose))
+
+        console.log("length of arraypose:", arrayNose.length);
+
+        // for (var indexCount =0 ; indexCount < arrayNose.length ; indexCount++){
+        //   console.log(arrayNose[indexCount].position.y)
+        // }
+        // console.log(arrayNose[0].position.x)
+        var direction = await this.getdirection(pose, arrayNose, arrayNose.length, 3)
+        //make function to calculate the rate of change in last x seconds 
+
+        console.log("the value of direction is :", direction)
+
+
+
+        if (direction == -1 && tempVar == 1) {
+          console.log("------------------------- direction up called")
+          this.dynamic_squat += 0.5
+          tempVar = 0;
+
+        }
+        if (direction == 1 && tempVar == 0) {
+          console.log("------------------------- direction down called")
+          this.dynamic_squat += 0.5
+          tempVar = 1;
+        }
+
+
+
+        console.log("Total number of squats:", this.dynamic_squat);
+
+        init_i += 1;
+      }
+    }, 300);
+  }
+
+  // this function returns the direction of motion.
+  async getdirection(pose, elements, length, frame) {
+
+    var start = length - frame
+    var changes = []
+    var totalChange = 0
+
+    console.log("get diection called ")
+    for (var i = start, j = 0; j < frame - 1; i++, j++) {
+      // console.log("start position:", elements[start].position.y)
+
+      changes[j] = elements[start + j + 1].position.y - elements[start + j].position.y;
+
+        totalChange += changes[j];
+    }
+
+    var relativeChange = Math.abs(totalChange/frame);
+    var leastDistane = await this.findDistanceBy2Id(pose, 0, 1)
+    leastDistane = leastDistane*2
+    console.log("======total change:", relativeChange)
+
+    console.log("=======distance between 2 points : ", leastDistane);
+
+    if (totalChange >= 0.1 && relativeChange>leastDistane) {
+      totalChange = 1
+    }
+    else if (totalChange <= -0.1 && relativeChange>leastDistane) {
+      totalChange = -1
+    }
+    else totalChange = 0
+    // console.log("overallChange :", totalChange);
+
+    return totalChange;
+  }
 
 }
