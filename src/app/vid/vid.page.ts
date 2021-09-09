@@ -39,10 +39,10 @@ export class VidPage implements OnInit {
   posenet = require('@tensorflow-models/posenet');
   video: any;
   url: any;
-  squat_count = 0;
-  push_count = 0;
+
   dynamic_squat = 0;
   pushupTrackingArray = [];
+  allTrackingArray=[]
   // video = new Array<HTMLVideoElement>();
 
   //array for storing user video elements 
@@ -107,8 +107,7 @@ export class VidPage implements OnInit {
         this.videos[id].data = video;
 
 
-        // console.log("result", this.videos)
-        this.dosomethinghere(video);
+ 
         // video.src = this.sanitization.bypassSecurityTrustUrl(base64) as string;
         video.src = base64
         video.load();
@@ -143,8 +142,7 @@ export class VidPage implements OnInit {
 
         this.coachVideo[id].data = video;
 
-        // console.log("result", this.videos)
-        this.dosomethinghere(video);
+   
         // video.src = this.sanitization.bypassSecurityTrustUrl(base64) as string;
         video.src = base64
         video.load();
@@ -180,172 +178,6 @@ export class VidPage implements OnInit {
 
     window.length;
   }
-
-
-  // Function to do automatic Squat counting 
-  async doSquatCounting(id) {
-
-    const vid = this.videos[id].data;
-    vid.width = 500;
-    vid.height = 500 / 1.7778;
-
-    const posenet = require('@tensorflow-models/posenet');
-    const net = await posenet.load();
-
-    const id_list_right = [12, 14, 16];
-    const id_list_left = [11, 13, 15];
-
-    let low, high, percentage, angle, count;
-    low = 50;
-    high = 160;
-    let direction = 0;
-
-    const pose = await net.estimateSinglePose(vid, {
-      flipHorizontal: false
-    })
-    console.log(pose)
-    const findAngle = (p1, p2, p3, p4) => this.findAngle(p1, p2, p3, p4);
-    //loop function to run every 1 sec until the video is over !
-    let temp_id = setInterval(async () => {
-      if (vid.onended) {
-        clearInterval(temp_id);
-      }
-      else {
-        // Figure out how to use Findangle inside
-        const pose = net.estimateSinglePose(vid, {
-          flipHorizontal: false
-        })
-        angle = findAngle(await pose, 12, 14, 16);
-        percentage = ((angle - low) * 100) / (high - low)
-        percentage = this.calPercentage(percentage)
-        this.percentage = percentage;
-        console.log("percentage of complete:", percentage);
-
-        // try to return this value back to html
-        // document.getElementById("ret").innerHTML = String(percentage);
-
-        // set restriction for max , full and improper repetion 
-        if (percentage == 100) {
-          if (direction == 0) {
-            console.log("up")
-            this.squat_count += 0.5;
-            direction = 1;
-          }
-        }
-        if (percentage == 0) {
-          if (direction == 1) {
-            console.log("down");
-            this.squat_count += 0.5;
-            direction = 0;
-          }
-        }
-        console.log("Total Number of Squat: " + Math.floor(this.squat_count + 1));
-        console.log(angle);
-      }
-    }, 100);
-
-  }
-
-  //Function to count the number of Pushups 
-  async doPushUpCounting(id) {
-    const vid = this.videos[id].data;
-    vid.width = 500;
-    vid.height = 500 / 1.7778;
-
-    const posenet = require('@tensorflow-models/posenet');
-    const net = await posenet.load();
-
-    const id_list_right = [6, 8, 10];
-    const id_list_left = [5, 7, 9];
-
-    let low, high, percentage, angle, count;
-    low = 100;
-    high = 170;
-    let direction = 0;
-
-    const pose = await net.estimateSinglePose(vid, {
-      flipHorizontal: false
-    })
-    console.log(pose)
-    const findAngle = (p1, p2, p3, p4) => this.findAngle(p1, p2, p3, p4);
-    //loop function to run every 1 sec until the video is over !
-    let temp_id = setInterval(async () => {
-      if (vid.onended) {
-        clearInterval(temp_id);
-      }
-      else {
-        // Figure out how to use Findangle inside
-        const pose = net.estimateSinglePose(vid, {
-          flipHorizontal: false
-        })
-        angle = findAngle(await pose, 5, 7, 9);
-        percentage = ((angle - low) * 100) / (high - low)
-        percentage = this.calPercentage(percentage)
-        this.percentage = percentage;
-        console.log("percentage of complete:", percentage);
-
-        // try to return this value back to html
-        // document.getElementById("ret").innerHTML = String(percentage);
-
-        // set restriction for max , full and improper repetion 
-        if (percentage == 100) {
-          if (direction == 0) {
-            console.log("up")
-            this.push_count += 0.5;
-            direction = 1;
-          }
-        }
-        if (percentage == 0) {
-          if (direction == 1) {
-            console.log("down");
-            this.push_count += 0.5;
-            direction = 0;
-          }
-        }
-        console.log("Total Number of Pushup: " + Math.floor(this.push_count + 1));
-        console.log("Angle:", angle);
-      }
-    }, 100);
-
-  }
-
-  calPercentage(percentage) {
-    if (percentage > 100) return 100;
-    if (percentage < 0) return 0;
-    return percentage
-    return Math.abs(percentage)
-  }
-
-  findAngle(pose, id1, id2, id3) {
-
-    console.log(pose.keypoints[id1].part)
-    console.log(pose.keypoints[id2].part)
-    console.log(pose.keypoints[id3].part)
-
-    const x0 = pose.keypoints[id1].position.x;
-    const y0 = pose.keypoints[id1].position.y;
-
-    const x1 = pose.keypoints[id2].position.x;
-    const y1 = pose.keypoints[id2].position.y;
-
-    const x2 = pose.keypoints[id3].position.x;
-    const y2 = pose.keypoints[id3].position.y;
-
-    var a = Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2),
-      b = Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2),
-      c = Math.pow(x2 - x0, 2) + Math.pow(y2 - y0, 2);
-
-    let angle = (Math.acos((a + b - c) / Math.sqrt(4 * a * b))) * (180 / 3.14)
-    return angle;
-  }
-
-  dosomethinghere(video: HTMLVideoElement) {
-    console.log("result", video);
-
-    return;
-  }
-
-
 
   // Do Pose Matching for coach and user video
   async doPoseChecking(id) {
@@ -405,115 +237,6 @@ export class VidPage implements OnInit {
     }, 100);
   }
 
-  // functions to perform preprocessing (not completed)
-  async doPreprocessing(id) {
-
-    const vid = this.videos[id].data;
-    const coachVid = this.videos[id].data;
-
-    console.log("this video is of type:", typeof vid)
-
-    const model = await cocoSSD.load('lite_mobilenet_v2' as any);
-    this.detectFrame(vid, model);
-
-  }
-
-  detectFrame = (video, model) => {
-    model.detect(video).then(predictions => {
-      console.log("prediction", predictions);
-      this.renderPredictions(predictions, video);
-      requestAnimationFrame(() => {
-        this.detectFrame(video, model);
-      });
-    });
-  }
-
-  renderPredictions = (predictions, vid) => {
-    const canvas = <HTMLCanvasElement>document.getElementById("canvas");
-    console.log("renderPredictions() starts.", canvas);
-    const ctx = canvas.getContext("2d");
-    canvas.width = 300;
-    canvas.height = 300;
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    // Fonts
-    const font = "16px sans-serif";
-    ctx.font = font;
-    ctx.textBaseline = "top";
-    ctx.drawImage(vid, 0, 0, 300, 300);
-    predictions.forEach(prediction => {
-      const x = prediction.bbox[0];
-      const y = prediction.bbox[1];
-      const width = prediction.bbox[2];
-      const height = prediction.bbox[3];
-      // Bounding box
-      ctx.strokeStyle = "#00FFFF";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, width, height);
-      // Label background
-      ctx.fillStyle = "#00FFFF";
-      const textWidth = ctx.measureText(prediction.class).width;
-      const textHeight = parseInt(font, 10); // base 10
-      ctx.fillRect(x, y, textWidth + 4, textHeight + 4);
-    });
-    predictions.forEach(prediction => {
-
-      const x = prediction.bbox[0];
-      const y = prediction.bbox[1];
-      ctx.fillStyle = "#000000";
-      ctx.fillText(prediction.class, x, y);
-    });
-  };
-
-  // function to perform cropping 
-  async doCropping(id) {
-
-    const vid = this.videos[id].data;
-    const coachVid = this.videos[id].data;
-
-
-    vid.width = 500;
-    vid.height = 500 / 1.7778;
-
-    // const posenet = require('@tensorflow-models/posenet');
-    // const net = await posenet.load();
-
-    let temp_id = setInterval(async () => {
-      if (vid.onended) {
-        clearInterval(temp_id);
-      }
-      else {
-
-        // Load the model.
-        const model = await cocoSsd.load();
-
-        // Classify the image.
-        const predictions: any[] = await model.detect(coachVid);
-
-        console.log('Predictions: ');
-        // console.log(predictions.find(prediction=>prediction.class ==="person")?.bbox);
-
-        var results = predictions.find(prediction => prediction.class === "person")?.bbox;
-        console.log(results);
-
-        //check height width and return the square 
-        var height = results[3];
-        var width = results[2];
-
-        if (height >= width) {
-          width = height;
-        }
-        else {
-          height = width;
-        }
-
-        // get the size for bounding box  if prediction 
-
-      }
-    }, 100);
-  }
-
-  //to be implement 
-
   //returns the distance between 2 points 
   async findDistanceBy2Id(pose, id1, id2) {
 
@@ -529,105 +252,7 @@ export class VidPage implements OnInit {
 
     return dist;
   }
-  async findDistanceBy3Id(pose, id1, id2, id3) {
 
-  }
-
-
-  async squatNewDistance(id) {
-
-    const vid = this.videos[id].data;
-    const coachVid = this.videos[id].data;
-
-
-    vid.width = 500;
-    vid.height = 500 / 1.7778;
-
-    const posenet = require('@tensorflow-models/posenet');
-    const net = await posenet.load();
-
-    //  ---   start while loop ---
-    //logic 
-    // get pose and set as initial pose '
-
-    //to keep track of workout 
-    let count = 0;
-    //A flag denoting change in state. 0 -> previous state is continuing, 1 -> state has changed
-    let direction = 0
-
-    let low = 10
-    let high = 110
-    let percentage = 0
-
-    //array count track 
-    let init_i = 0
-
-    const init_pose = await net.estimateSinglePose(vid, {
-      flipHorizontal: false
-    })
-    //loop function to run every 1 sec until the video is over !
-
-    // var pushupTrackingArray = [[],[]];
-
-    let temp_id = setInterval(async () => {
-      if (vid.onended) {
-        clearInterval(temp_id);
-      }
-      else {
-        // Figure out how to use Findangle inside
-        const pose = await net.estimateSinglePose(vid, {
-          flipHorizontal: false
-        })
-
-        //fill array with counts
-        console.log("-------  ----------- --------  --------  ----------")
-        console.log("Time:", init_i)
-        console.log("Value of I :", init_i)
-        for (let j = 0; j < pose.keypoints.length; j++) {
-          // console.log (pose.keypoints[j].part , pose.keypoints[j].score);
-          // console.log ( pose.keypoints[j].position.x ,pose.keypoints[j].position.y);
-          // console.log("keypoints: ", pose.keypoints[j].part , 'The value of i:', init_i , " j:", j);
-          // console.log("x , y coordinates:", pose.keypoints[j].position.x ,",", pose.keypoints[j].position.y);
-          this.pushupTrackingArray.push(pose.keypoints)
-
-          // how to extract the full range of joint motion by id
-          var arrayNose = this.pushupTrackingArray.map(each => { return each[0] });
-
-          // console.log("This is arrayNose: ",arrayNose);
-        }
-
-        //get current nose position 
-        let current = pose.keypoints[0].position.y;
-
-        console.log(current);
-
-        percentage = ((current - low) * 100) / (high - low)
-        percentage = this.calPercentage(percentage)
-
-        //final percentage
-        console.log("The current percentage:", percentage);
-
-        if (percentage == 100) {
-          if (direction == 0) {
-            // console.log("up")
-            this.squat_count += 0.5;
-            direction = 1;
-          }
-        }
-        if (percentage == 0) {
-          if (direction == 1) {
-            // console.log("down");
-            this.squat_count += 0.5;
-            direction = 0;
-          }
-        }
-
-        console.log("the total number of squat:", this.squat_count)
-
-        init_i += 1;
-      }
-    }, 100);
-  }
 
   //to count pushups with the help of direction 
   async squatDynamicDistance(id) {
@@ -749,4 +374,96 @@ export class VidPage implements OnInit {
     return totalChange;
   }
 
+
+  async detectMotion(id){
+
+    const vid = this.videos[id].data;
+    const coachVid = this.videos[id].data;
+
+    vid.width = 500;
+    vid.height = 500 / 1.7778;
+
+    //load posenet module 
+    const posenet = require('@tensorflow-models/posenet');
+    const net = await posenet.load();
+
+    //A flag denoting change in state. 0 -> previous state is continuing, 1 -> state has changed
+    let direction = 0
+    //array count track 
+    let init_i = 0
+
+    //track change in direction
+    let tempVar = 1
+
+    const init_pose = await net.estimateSinglePose(vid, {
+      flipHorizontal: false
+    })
+
+    let temp_id = setInterval(async () => {
+
+      if (vid.onended) {
+        clearInterval(temp_id);
+      }
+      else {
+        const pose = await net.estimateSinglePose(vid, {
+          flipHorizontal: false
+        })
+
+        //fill array with counts
+        console.log("-------  ----------- --------  --------  ----------")
+        console.log("Time:", init_i)
+        console.log("Value of I :", init_i)
+
+        //save current pose inside an array 
+        this.allTrackingArray.push(pose.keypoints)
+
+        // extract nose values 
+        var arrayNose = this.pushupTrackingArray.map(each => { return each[0]});
+
+        // ------ get distance travelled or changed in the last x frames 
+
+        var distance = this.rateOfChange(pose, arrayNose, arrayNose.length, 3)
+       
+      }
+    }, 300);
+
+  }
+//pose, arrayNose, arrayNose.length, 3 
+  async rateOfChange(pose, elements, length, frame){
+
+    var start = length - frame
+    var changes = []
+    var totalChange = 0
+
+    console.log("rateOfChange called")
+    for (var i = start, j = 0; j < frame - 1; i++, j++) {
+      
+      changes[j] = elements[start + j + 1].position.y - elements[start + j].position.y;
+
+        changes[j] = Math.abs(changes[j])
+        totalChange += changes[j];
+        console.log("total change:", totalChange);
+    }
+
+    
+
+    // var relativeChange = Math.abs(totalChange/frame);
+    // var leastDistane = await this.findDistanceBy2Id(pose, 0, 1)
+    // leastDistane = leastDistane*2
+    // console.log("======total change:", relativeChange)
+
+    // console.log("=======distance between 2 points : ", leastDistane);
+
+    // if (totalChange >= 0.1 && relativeChange>leastDistane) {
+    //   totalChange = 1
+    // }
+    // else if (totalChange <= -0.1 && relativeChange>leastDistane) {
+    //   totalChange = -1
+    // }
+    // else totalChange = 0
+    // // console.log("overallChange :", totalChange);
+
+    // return totalChange;
+    // // find he change in motion in the last x frames 
+  }
 }
