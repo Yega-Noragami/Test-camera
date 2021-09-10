@@ -418,10 +418,11 @@ export class VidPage implements OnInit {
         this.allTrackingArray.push(pose.keypoints)
 
         // extract nose values 
-        var arrayNose = this.pushupTrackingArray.map(each => { return each[0]});
+        var arrayNose = this.allTrackingArray.map(each => { return each[0]});
 
         // ------ get distance travelled or changed in the last x frames 
 
+        
         var distance = this.rateOfChange(pose, arrayNose, arrayNose.length, 3)
        
       }
@@ -442,8 +443,12 @@ export class VidPage implements OnInit {
 
         changes[j] = Math.abs(changes[j])
         totalChange += changes[j];
-        console.log("total change:", totalChange);
     }
+
+    let threshold = await this.findDistanceBy2Id(pose , 0 , 1);
+
+    console.log("total change:", totalChange);
+    console.log("threshold distance : ",threshold )
 
     
 
